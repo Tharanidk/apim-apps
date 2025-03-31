@@ -21,6 +21,11 @@ import ContentBase from 'AppComponents/AdminPages/Addons/ContentBase';
 import { Link as RouterLink } from 'react-router-dom';
 import {
     Grid, Card, CardContent, Typography,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    Link,
+    ListItemText,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box } from '@mui/system';
@@ -28,9 +33,41 @@ import GovernanceAPI from 'AppData/GovernanceAPI';
 import { FormattedMessage, useIntl } from 'react-intl';
 import DonutChart from 'AppComponents/Shared/DonutChart';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HelpBase from 'AppComponents/AdminPages/Addons/HelpBase';
+import Configurations from 'Config';
+import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
 import RuleViolationSummary from './RuleViolationSummary';
 import RulesetAdherenceSummaryTable from './RulesetAdherenceSummaryTable';
 import PolicyAdherenceSummaryTable from './PolicyAdherenceSummaryTable';
+
+function ComplianceHelp() {
+    return (
+        <HelpBase>
+            <List component='nav'>
+                <ListItemButton>
+                    <ListItemIcon sx={{ minWidth: 'auto', marginRight: 1 }}>
+                        <DescriptionIcon />
+                    </ListItemIcon>
+                    <Link
+                        target='_blank'
+                        href={Configurations.app.docUrl
+                            + 'governance/api-governance-admin-capabilities/#compliance-monitoring'}
+                        underline='hover'
+                    >
+                        <ListItemText primary={(
+                            <FormattedMessage
+                                id='Governance.ComplianceDashboard.Compliance.help.link'
+                                defaultMessage='Compliance Monitoring'
+                            />
+                        )}
+                        />
+                    </Link>
+                </ListItemButton>
+            </List>
+        </HelpBase>
+    );
+}
 
 export default function Compliance(props) {
     const intl = useIntl();
@@ -165,7 +202,8 @@ export default function Compliance(props) {
         };
     }, [artifactId]);
 
-    if (complianceStatus === 'PENDING') {
+    if ((complianceStatus === 'NOT_APPLICABLE' && complianceData?.governedPolicies.length === 0)
+        || (complianceStatus === 'NOT_APPLICABLE' && !complianceData)) {
         return (
             <ContentBase
                 width='full'
@@ -177,8 +215,15 @@ export default function Compliance(props) {
                     />
                 )}
                 pageStyle='paperLess'
+                help={<ComplianceHelp />}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', paddingBottom: 4 }}>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingBottom: 4,
+                    justifyContent: 'space-between',
+                }}
+                >
                     <RouterLink
                         to='/governance/compliance'
                         style={{
@@ -191,6 +236,98 @@ export default function Compliance(props) {
                             defaultMessage='Back to Compliance Dashboard'
                         />
                     </RouterLink>
+                    <Typography variant='body2'>
+                        <FormattedMessage
+                            id='Governance.ComplianceDashboard.Compliance.api.owner'
+                            defaultMessage='API Owner: {owner}'
+                            values={{ owner: artifactOwner }}
+                        />
+                    </Typography>
+                </Box>
+                <Card
+                    elevation={3}
+                    sx={{
+                        mt: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: 4,
+                    }}
+                >
+                    <AssignmentLateIcon
+                        sx={{
+                            fontSize: 60,
+                            color: 'action.disabled',
+                            mb: 2,
+                        }}
+                    />
+                    <Typography
+                        variant='h5'
+                        color='text.secondary'
+                        gutterBottom
+                        sx={{ fontWeight: 'medium' }}
+                    >
+                        <FormattedMessage
+                            id='Apis.Details.Compliance.not.applicable.message'
+                            defaultMessage='No governance policies have been attached to this API.'
+                        />
+                    </Typography>
+                    <Typography
+                        variant='body1'
+                        color='text.secondary'
+                        align='center'
+                    >
+                        <FormattedMessage
+                            id='Governance.ComplianceDashboard.Compliance.not.applicable.description'
+                            defaultMessage={'Please attach governance policies to the API '
+                                + 'to view the compliance status.'}
+                        />
+                    </Typography>
+                </Card>
+            </ContentBase>
+        );
+    }
+
+    if (complianceStatus === 'PENDING') {
+        return (
+            <ContentBase
+                width='full'
+                title={(
+                    <FormattedMessage
+                        id='Governance.ComplianceDashboard.Compliance.title'
+                        defaultMessage='Compliance Summary - {artifactName}'
+                        values={{ artifactName }}
+                    />
+                )}
+                pageStyle='paperLess'
+                help={<ComplianceHelp />}
+            >
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingBottom: 4,
+                    justifyContent: 'space-between',
+                }}
+                >
+                    <RouterLink
+                        to='/governance/compliance'
+                        style={{
+                            display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit',
+                        }}
+                    >
+                        <ArrowBackIcon />
+                        <FormattedMessage
+                            id='Governance.ComplianceDashboard.Compliance.back.to.compliance'
+                            defaultMessage='Back to Compliance Dashboard'
+                        />
+                    </RouterLink>
+                    <Typography variant='body2'>
+                        <FormattedMessage
+                            id='Governance.ComplianceDashboard.Compliance.api.owner'
+                            defaultMessage='API Owner: {owner}'
+                            values={{ owner: artifactOwner }}
+                        />
+                    </Typography>
                 </Box>
                 <Card
                     elevation={3}
@@ -246,6 +383,7 @@ export default function Compliance(props) {
                 />
             )}
             pageStyle='paperLess'
+            help={<ComplianceHelp />}
         >
             <Box sx={{
                 display: 'flex',
@@ -427,46 +565,6 @@ export default function Compliance(props) {
                                 </CardContent>
                             </Card>
                         </Grid>
-
-                        {/* Rule Violation Summary section */}
-                        <Grid item xs={12}>
-                            <Card elevation={3}>
-                                <CardContent>
-                                    <RuleViolationSummary
-                                        artifactId={artifactId}
-                                        complianceData={complianceData}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Ruleset Adherence Summary section */}
-                        <Grid item xs={12} md={12}>
-                            <Card
-                                elevation={3}
-                                sx={{
-                                    '& .MuiTableCell-footer': {
-                                        border: 0,
-                                    },
-                                }}
-                            >
-                                <CardContent>
-                                    <Typography
-                                        variant='body1'
-                                        sx={{ fontWeight: 'bold', mb: 2 }}
-                                    >
-                                        <FormattedMessage
-                                            id='Governance.ComplianceDashboard.Compliance.ruleset.adherence.summary'
-                                            defaultMessage='Ruleset Adherence Summary'
-                                        />
-                                    </Typography>
-                                    <RulesetAdherenceSummaryTable
-                                        artifactId={artifactId}
-                                        complianceData={complianceData}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </Grid>
                     </>
                 )}
 
@@ -497,6 +595,50 @@ export default function Compliance(props) {
                         </CardContent>
                     </Card>
                 </Grid>
+
+                {!allPoliciesPending && (
+                    <>
+                        {/* Ruleset Adherence Summary section */}
+                        <Grid item xs={12} md={12}>
+                            <Card
+                                elevation={3}
+                                sx={{
+                                    '& .MuiTableCell-footer': {
+                                        border: 0,
+                                    },
+                                }}
+                            >
+                                <CardContent>
+                                    <Typography
+                                        variant='body1'
+                                        sx={{ fontWeight: 'bold', mb: 2 }}
+                                    >
+                                        <FormattedMessage
+                                            id='Governance.ComplianceDashboard.Compliance.ruleset.adherence.summary'
+                                            defaultMessage='Ruleset Adherence Summary'
+                                        />
+                                    </Typography>
+                                    <RulesetAdherenceSummaryTable
+                                        artifactId={artifactId}
+                                        complianceData={complianceData}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        {/* Rule Violation Summary section */}
+                        <Grid item xs={12}>
+                            <Card elevation={3}>
+                                <CardContent>
+                                    <RuleViolationSummary
+                                        artifactId={artifactId}
+                                        complianceData={complianceData}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </>
+                )}
             </Grid>
         </ContentBase>
     );

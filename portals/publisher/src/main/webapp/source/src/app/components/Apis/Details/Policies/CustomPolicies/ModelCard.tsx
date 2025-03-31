@@ -52,6 +52,13 @@ const ModelCard: FC<ModelCardProps> = ({
         const { name, value } = event.target;
         const updatedModel = { ...modelData, [name]: name === "weight" ? parseFloat(value) : value };
 
+        if (name === 'endpointId') {
+            const selectedEndpoint = endpointList.find((endpoint) => endpoint.id === value);
+            if (selectedEndpoint) {
+                updatedModel.endpointName = selectedEndpoint.name;
+            }
+        }
+
         onUpdate(updatedModel);
     }
 
@@ -69,7 +76,7 @@ const ModelCard: FC<ModelCardProps> = ({
                         <Select
                             labelId='model-label'
                             id='model'
-                            value={modelData.model || ""}
+                            value={model}
                             label='Model'
                             name='model'
                             onChange={(e: any) => handleChange(e)}
@@ -105,8 +112,6 @@ const ModelCard: FC<ModelCardProps> = ({
                                 id='endpoint-weight'
                                 label='Weight'
                                 size='small'
-                                // helperText={getError(spec) === '' ? spec.description : getError(spec)}
-                                // error={getError(spec) !== ''}
                                 variant='outlined'
                                 name='weight'
                                 type='number'

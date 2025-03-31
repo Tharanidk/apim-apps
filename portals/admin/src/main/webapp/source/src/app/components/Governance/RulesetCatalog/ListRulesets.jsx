@@ -16,11 +16,17 @@
  * under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useIntl, FormattedMessage } from 'react-intl';
 import Typography from '@mui/material/Typography';
 import ListBase from 'AppComponents/AdminPages/Addons/ListBase';
-import { Chip, Button, Tooltip } from '@mui/material';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HelpBase from 'AppComponents/AdminPages/Addons/HelpBase';
+import Configurations from 'Config';
+import {
+    Chip, Button, Tooltip, List, ListItemButton, ListItemIcon, Link,
+    ListItemText,
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import GovernanceAPI from 'AppData/GovernanceAPI';
@@ -28,29 +34,19 @@ import Utils from 'AppData/Utils';
 import DeleteRuleset from './DeleteRuleset';
 
 /**
- * Get all rulesets recursively
- * @param {Object} restApi GovernanceAPI instance
- * @param {Array} accumulator Accumulated rulesets
- * @returns {Promise} Promise resolving to all rulesets
+ * API call to get Rulesets
+ * @returns {Promise}.
  */
-async function getAllRulesets(restApi, accumulator = []) {
-    try {
-        const params = {
-            limit: 25,
-            offset: accumulator.length,
-        };
-        const response = await restApi.getRulesets(params);
-        const { list, pagination } = response.body;
-        const newAccumulator = [...accumulator, ...list];
-
-        if (pagination.total > newAccumulator.length) {
-            return getAllRulesets(restApi, newAccumulator);
-        }
-        return newAccumulator;
-    } catch (error) {
-        console.error('Error fetching rulesets:', error);
-        throw error;
-    }
+function apiCall() {
+    const restApi = new GovernanceAPI();
+    return restApi
+        .getRulesets({ limit: 100, offset: 0 })
+        .then((result) => {
+            return result.body.list;
+        })
+        .catch((error) => {
+            throw error;
+        });
 }
 
 /**
@@ -59,23 +55,6 @@ async function getAllRulesets(restApi, accumulator = []) {
  */
 export default function ListRulesets() {
     const intl = useIntl();
-    const [rulesets, setRulesets] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const restApi = new GovernanceAPI();
-        setIsLoading(true);
-        getAllRulesets(restApi)
-            .then((allRulesets) => {
-                setRulesets(allRulesets);
-            })
-            .catch((error) => {
-                console.error('Error loading rulesets:', error);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, []);
 
     const columProps = [
         {
@@ -214,6 +193,31 @@ export default function ListRulesets() {
                 'Find comprehensive governance rulesets designed to ensure'
                 + ' the consistency, security and reliability for your APls',
         }),
+        help: (
+            <HelpBase>
+                <List component='nav'>
+                    <ListItemButton>
+                        <ListItemIcon sx={{ minWidth: 'auto', marginRight: 1 }}>
+                            <DescriptionIcon />
+                        </ListItemIcon>
+                        <Link
+                            target='_blank'
+                            href={Configurations.app.docUrl
+                                + 'governance/api-governance-admin-capabilities/#create-and-manage-rulesets'}
+                            underline='hover'
+                        >
+                            <ListItemText primary={(
+                                <FormattedMessage
+                                    id='Governance.Rulesets.List.help.link'
+                                    defaultMessage='Create and Manage Rulesets'
+                                />
+                            )}
+                            />
+                        </Link>
+                    </ListItemButton>
+                </List>
+            </HelpBase>
+        ),
     };
 
     const addButtonProps = {
@@ -279,7 +283,7 @@ export default function ListRulesets() {
                     }),
                     active: true,
                 }}
-                initialData={!isLoading ? rulesets : null}
+                apiCall={apiCall}
                 DeleteComponent={DeleteRuleset}
                 editComponentProps={{
                     icon: <EditIcon />,
