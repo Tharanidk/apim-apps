@@ -67,7 +67,7 @@
         "lodash.isplainobject": "^4.0.6",
         "lodash.merge": "^4.6.2",
         "mui-datatables": "^4.3.0",
-        "openapi-to-postmanv2": "^4.20.0",
+        "openapi-to-postmanv2": "6.0.0",
         "prop-types": "^15.8.1",
         "qs": "^6.14.0",
         "query-string": "^7.1.3",
